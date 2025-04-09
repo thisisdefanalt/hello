@@ -1,39 +1,8 @@
+# Discord Bot Popup Messenger Script
 
-
-function Decode-Credential {
-    param(
-        [string]$EncodedCredential,
-        [string]$Key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?"
-    )
-    
-    try {
-       
-        $decodedBytes = [System.Convert]::FromBase64String($EncodedCredential)
-        $decodedText = [System.Text.Encoding]::UTF8.GetString($decodedBytes)
-        
-       
-        $decryptedText = ""
-        for ($i = 0; $i -lt $decodedText.Length; $i++) {
-            $decryptedText += [char]([int]$decodedText[$i] -bxor [int]$Key[$i % $Key.Length])
-        }
-        
-        return $decryptedText
-    }
-    catch {
-        Write-Error "Decryption failed: $_"
-        return $null
-    }
-}
-
-
-$encodedBotToken = "DBYOdQoSEnoHDiA7ADQkKRwWHiMaEgJpFz1PJTUiUQcLRjg+RjojKg0hFRgLIzlbTy8mTVIBYQcBVHpNbXtlCEJOEWsSZHpe"
-$encodedChannelId = "cHF2fXBwc35xeXl4dHt3ZmJqYg=="
-$encodedClientSecret = "d3oUdDQJAnl8fCUlNWM8GzkdFREsEwUiD2omDzMnNiI="
-
-
-$botToken = Decode-Credential -EncodedCredential $encodedBotToken
-$channelId = Decode-Credential -EncodedCredential $encodedChannelId
-$clientSecret = Decode-Credential -EncodedCredential $encodedClientSecret
+# Configuration
+$botToken = "MTM5NTY0OTAzOTIwMzA4NTU2.GVF4al.QT-VNDbQdjxWL-8W_7b0S45aLzUBDHaj454NRw"
+$channelId = "1359564683249586381"
 
 # Function to send message using Discord Bot API
 function Send-DiscordMessage {
