@@ -1,88 +1,67 @@
-# Discord Bot Online Message Sender
-
-# Requires Discord.Net libraries to be present
-Add-Type -Path ".\Discord.Net.Core.dll"
-Add-Type -Path ".\Discord.Net.WebSocket.dll"
-Add-Type -Path ".\Discord.Net.Rest.dll"
-Add-Type -Path ".\System.Collections.Immutable.dll"
-Add-Type -AssemblyName System.Windows.Forms
+# Discord Bot Popup Messenger with Detailed Error Handling
 
 # Configuration
 $botToken = "MTM5NTY0OTAzOTIwMzA4NTU2.GVF4al.QT-VNDbQdjxWL-8W_7b0S45aLzUBDHaj454NRw"
-$channelId = 1359564683249586381
+$channelId = "1359564683249586381"
 
-# Create Discord Client Configuration
-$config = New-Object Discord.WebSocket.DiscordSocketConfig
-$config.LogLevel = [Discord.LogSeverity]::Warning
-$client = New-Object Discord.WebSocket.DiscordSocketClient($config)
-
-# Logging function
-$logAction = {
-    param($msg)
-    Write-Host $msg.ToString()
+# Function to send message using Discord Bot API
+function Send-DiscordMessage {
+    param (
+        [string]$Token,
+        [string]$ChannelId,
+        [string]$Message
+    )
+    $headers = @{
+        "Authorization" = "Bot $Token"
+        "Content-Type" = "application/json"
+    }
+    $body = @{
+        content = $Message
+    } | ConvertTo-Json
+    try {
+        $response = Invoke-RestMethod -Uri "https://discord.com/api/v10/channels/$ChannelId/messages" `
+            -Method Post `
+            -Headers $headers `
+            -Body $body `
+            -ErrorVariable RestError
+        
+        return $true
+    }
+    catch {
+        # Capture detailed error information
+        $fullError = $_.Exception.Response
+        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $errorBody = $reader.ReadToEnd()
+        
+        # Log detailed error information
+        Write-Host "Full Error Details:"
+        Write-Host "Error Response: $fullError"
+        Write-Host "Error Body: $errorBody"
+        Write-Host "Exception Message: $($_.Exception.Message)"
+        
+        return $false
+    }
 }
-$client.Add_Log($logAction)
 
-# Ready event handler
-$readyAction = {
-    Write-Host "Bot is now online!"
-    
-    # Show popup
-    [System.Windows.Forms.MessageBox]::Show("Hello!", "Greeting", 
-        [System.Windows.Forms.MessageBoxButtons]::OK, 
-        [System.Windows.Forms.MessageBoxIcon]::Information)
+# Show Hello popup
+$wshell = New-Object -ComObject Wscript.Shell
+$result = $wshell.Popup("Hello!", 0, "Greeting", 0)
 
-    # Get the channel and send message
-    $channel = $client.GetChannel($channelId)
-    $sendTask = $channel.SendMessageAsync("Hello from PowerShell script!")
-    $sendTask.Wait()
-
-    Write-Host "Message sent successfully!"
-
-    # Disconnect after sending message
-    $stopTask = $client.StopAsync()
-    $stopTask.Wait()
-
-    $logoutTask = $client.LogoutAsync()
-    $logoutTask.Wait()
-
-    # Exit the script
-    [Environment]::Exit(0)
-}
-
-# Hook up the ready event
-$client.Add_Ready($readyAction)
-
-try {
-    # Login and start the client
-    $loginTask = $client.LoginAsync([Discord.TokenType]::Bot, $botToken)
-    $loginTask.Wait()
-
-    $startTask = $client.StartAsync()
-    $startTask.Wait()
-
-    # Keep the script running
-    Start-Sleep -Seconds 300  # 5-minute timeout in case something goes wrong
-}
-catch {
-    Write-Host "An error occurred: $_"
-    
-    # Log error to desktop
-    $errorLogPath = Join-Path -Path ([Environment]::GetFolderPath('Desktop')) -ChildPath "discord_bot_error.log"
-    $errorDetails = @"
-[$(Get-Date)]
-Error: $($_.Exception.Message)
-Full Error: $($_.Exception | Format-List * -Force | Out-String)
-"@
-    Add-Content -Path $errorLogPath -Value $errorDetails
-}
-finally {
-    # Ensure client is stopped and logged out if not already done
-    if ($client.ConnectionState -ne [Discord.ConnectionState]::Disconnected) {
-        $stopTask = $client.StopAsync()
-        $stopTask.Wait()
-
-        $logoutTask = $client.LogoutAsync()
-        $logoutTask.Wait()
+# If user clicks OK (result = 1), send message to Discord
+if ($result -eq 1) {
+    try {
+        $messageSent = Send-DiscordMessage -Token $botToken -ChannelId $channelId -Message "Hello from PowerShell script!"
+        
+        if ($messageSent) {
+            $wshell.Popup("Message sent to Discord successfully!", 0, "Success", 0)
+        }
+        else {
+            $wshell.Popup("Failed to send message to Discord. Check console for details.", 0, "Error", 16)
+        }
+    }
+    catch {
+        $wshell.Popup("An unexpected error occurred: $($_.Exception.Message)", 0, "Error", 16)
     }
 }
