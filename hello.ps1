@@ -35,8 +35,8 @@ try {
     # Copy entire virtual screen to the bitmap
     $graphics.CopyFromScreen($left, $top, 0, 0, $bitmap.Size)
     
-    # Get downloads folder path - Fixed User Profile to UserProfile
-    $downloadsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), "Downloads")
+    # Get downloads folder path
+    $downloadsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::User Profile), "Downloads")
     
     # Create a filename with timestamp
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -48,18 +48,11 @@ try {
     # Dispose of graphics and bitmap
     $graphics.Dispose()
     $bitmap.Dispose()
-    
-    # Notify the user that the screenshot has been saved
-    [System.Windows.Forms.MessageBox]::Show(
-        "Screenshot saved to:`n$filename", 
-        "Screenshot Saved", 
-        [System.Windows.Forms.MessageBoxButtons]::OK, 
-        [System.Windows.Forms.MessageBoxIcon]::Information)
 }
 catch {
     # Show error message if something goes wrong
     [System.Windows.Forms.MessageBox]::Show(
-        "Error taking screenshot: $_", 
+        "Error: $_", 
         "Error", 
         [System.Windows.Forms.MessageBoxButtons]::OK, 
         [System.Windows.Forms.MessageBoxIcon]::Error)
