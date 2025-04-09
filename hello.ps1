@@ -15,36 +15,55 @@ $permission = [System.Windows.Forms.MessageBox]::Show(
 # Only take screenshot if user gives permission
 if ($permission -eq [System.Windows.Forms.DialogResult]::Yes) {
     try {
-        # Get screen bounds
-        $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-        
-        # Create a bitmap
-        $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
-        
-        # Create graphics
-        $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-        
-        # Copy screen to bitmap
-        $graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size)
+        # Get all screens
+        $screens = [System.Windows.Forms.Screen]::AllScreens
+        $screenCount = $screens.Length
         
         # Get downloads folder path
         $downloadsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), "Downloads")
         
-        # Create a filename with timestamp
+        # Create a timestamp for the filenames
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-        $filename = [System.IO.Path]::Combine($downloadsPath, "Screenshot_$timestamp.png")
         
-        # Save the screenshot
-        $bitmap.Save($filename, [System.Drawing.Imaging.ImageFormat]::Png)
+        # Initialize an array to store all screenshot filenames
+        $screenshotFiles = @()
         
-        # Dispose of graphics and bitmap
-        $graphics.Dispose()
-        $bitmap.Dispose()
+        # Take a screenshot of each screen
+        for ($i = 0; $i -lt $screenCount; $i++) {
+            $screen = $screens[$i]
+            $bounds = $screen.Bounds
+            
+            # Create a bitmap
+            $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+            
+            # Create graphics
+            $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+            
+            # Copy screen to bitmap
+            $graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size)
+            
+            # Create a filename with timestamp and screen number
+            $screenNumber = $i + 1
+            $filename = [System.IO.Path]::Combine($downloadsPath, "Screenshot_${timestamp}_Monitor${screenNumber}of${screenCount}.png")
+            
+            # Save the screenshot
+            $bitmap.Save($filename, [System.Drawing.Imaging.ImageFormat]::Png)
+            
+            # Add the filename to our array
+            $screenshotFiles += $filename
+            
+            # Dispose of graphics and bitmap
+            $graphics.Dispose()
+            $bitmap.Dispose()
+        }
         
-        # Notify the user that the screenshot has been saved
+        # Create a message with all saved files
+        $fileListMessage = "Screenshots saved to:`n" + ($screenshotFiles -join "`n")
+        
+        # Notify the user that the screenshots have been saved
         [System.Windows.Forms.MessageBox]::Show(
-            "Screenshot saved to:`n$filename", 
-            "Screenshot Saved", 
+            $fileListMessage, 
+            "Screenshots Saved", 
             [System.Windows.Forms.MessageBoxButtons]::OK, 
             [System.Windows.Forms.MessageBoxIcon]::Information)
     }
